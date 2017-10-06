@@ -9,7 +9,7 @@ TODO:
 		Imgur						DONE
 		community.elitedangerous.com (galnet)
 		Coriolis.edcd.io
-		Reddit
+		Reddit						DONE
 		Twitch
 		<ignores>					DONE
 
