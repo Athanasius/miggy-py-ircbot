@@ -981,7 +981,7 @@ class SpiffyTitles(callbacks.Plugin):
             },
             "comment": {
                 "pattern":
-                    r"^/r/(?P<subreddit>[^/]+)/comments/(?P<thread>[^/]+)/[^/]+/(?P<comment>\w+)$",
+                    r"^/r/(?P<subreddit>[^/]+)/comments/(?P<thread>[^/]+)/[^/]+/(?P<comment>\w+)/?$",
                 "url": "https://www.reddit.com/r/{subreddit}/comments/{thread}/x/{comment}.json"
             },
             "user": {
