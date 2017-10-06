@@ -6,12 +6,12 @@ TODO:
 	Get all URL Parsing via SpiffyTitles looking the same as
 	perl-Cmdr
 		YouTube						DONE
-		Twitch
-		Reddit
 		Imgur						DONE
 		community.elitedangerous.com (galnet)
 		Coriolis.edcd.io
-		<ignores>
+		Reddit
+		Twitch
+		<ignores>					DONE
 
 	RSS feeds - need the forum de-dupe code, so likely need to make
 	a new plugin based on the existing one.
