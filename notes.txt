@@ -20,4 +20,4 @@ TODO:
 	Review commands on perl-Cmdr and ensure py-Cmdr is as close as
 	possible, including being as quiet as possible in the channel.
 
-
+	Q-Auth, preferably before joining channels.
