@@ -815,7 +815,12 @@ class SpiffyTitles(callbacks.Plugin):
                 title = self.get_title_from_html(html)
 
                 if title is not None:
-                    title_template = default_template.render(title=title, redirect=is_redirect)
+                    match = re.search('https?://([^/:]+)[:/]', url)
+                    if match:
+                        host = match.group(1)
+                    else:
+                        host = url
+                    title_template = default_template.render(title=title, redirect=is_redirect, url=url, host=host)
 
                     return title_template
         else:
@@ -1067,6 +1072,8 @@ class SpiffyTitles(callbacks.Plugin):
                 "title": data.get('title', ''),
                 "domain": data.get('domain', ''),
                 "score": data.get('score', 0),
+                "ups": data.get('ups', 0),
+                "downs": data.get('downs', 0),
                 "percent": '{}%'.format(int(data.get('upvote_ratio', 0) * 100)),
                 "comments": '{:,}'.format(data.get('num_comments', 0)),
                 "created": created.strftime('%Y-%m-%d'),
