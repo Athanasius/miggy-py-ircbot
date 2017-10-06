@@ -72,6 +72,7 @@ class SpiffyTitles(callbacks.Plugin):
         self.add_dailymotion_handlers()
         self.add_wikipedia_handlers()
         self.add_reddit_handlers()
+        self.add_twitch_handlers()
 
     def add_dailymotion_handlers(self):
         self.handlers["www.dailymotion.com"] = self.handler_dailymotion
@@ -90,6 +91,10 @@ class SpiffyTitles(callbacks.Plugin):
     def add_reddit_handlers(self):
         self.handlers["reddit.com"] = self.handler_reddit
         self.handlers["www.reddit.com"] = self.handler_reddit
+
+    def add_twitch_handlers(self):
+        self.handlers["twitch.tv"] = self.handler_twitch
+        self.handlers["www.twitch.tv"] = self.handler_twitch
 
     def handler_dailymotion(self, url, info, channel):
         """
@@ -1094,6 +1099,9 @@ class SpiffyTitles(callbacks.Plugin):
         else:
             self.log.debug("SpiffyTitles: falling back to default handler")
             return self.handler_default(url, channel)
+
+    def twitch_handler(self, input):
+        return None
 
     def is_valid_imgur_id(self, input):
         """
