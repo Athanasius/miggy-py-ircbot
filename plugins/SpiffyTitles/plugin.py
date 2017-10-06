@@ -1100,8 +1100,115 @@ class SpiffyTitles(callbacks.Plugin):
             self.log.debug("SpiffyTitles: falling back to default handler")
             return self.handler_default(url, channel)
 
-    def twitch_handler(self, input):
-        return None
+    def handler_twitch(self, url, domain, channel):
+        """
+        Queries twitch API for additional information about twitch links.
+
+        This handler is for (www.)twitch.tv
+        """
+        twitch_client_id = self.registryValue("twitch.clientID")
+        twitch_handler_enabled = self.registryValue("twitch.enabled", channel=channel)
+
+        if not twitch_handler_enabled or not twitch_client_id:
+            return self.handler_default(url, channel)
+
+        self.log.debug("SpiffyTitles: calling twitch handler for %s" % (url))
+
+        patterns = {
+            "channel": {
+                "pattern": r"^http(s)?:\/\/(www\.)?twitch\.tv\/(?P<channel_name>[^\/]+)",
+#                "pattern": r"^http(s)?:\/\/(www\.)?twitch\.tv\/(?P<channel_name>[^\/]+)(?P<video_pre>\/|\/dashboard)?$",
+                "url": "https://api.twitch.tv/kraken/streams/{channel_name}"
+            },
+            "video": {
+                "pattern": r"^http(s)?:\/\/(www\.)?twitch\.tv\/(?P<channel_name>[^\/]+)\/(?P<video_pre>.+)\/(?P<video_id>[0-9]+)$",
+                "url": "https://api.twitch.tv/kraken/videos/{video_pre}{video_id}"
+            }
+        }
+
+        for name in patterns:
+            match = re.search(patterns[name]['pattern'], url)
+            if match:
+                link_type = name
+                link_info = match.groupdict()
+                data_url = patterns[name]['url'].format(**link_info)
+                break
+
+        if not match:
+            self.log.debug("SpiffyTitles: twitch - no title found.")
+            return self.handler_default(url, channel)
+
+        agent = self.get_user_agent()
+        headers = {
+            "User-Agent": agent,
+            "Accept": "application/vnd.twitchtv.3+json",
+            "Client-ID": twitch_client_id,
+            "Accept-Language": "en-gb;q=0.8, en;q=0.7"
+        }
+
+        self.log.debug("SpiffyTitles: twitch - requesting %s" % (data_url))
+
+        request = requests.get(data_url, headers=headers)
+        ok = request.status_code == requests.codes.ok
+        data = {}
+        extract = ""
+
+        if ok:
+            response = json.loads(request.text)
+
+            if response:
+                self.log.debug("SpiffyTitles: twitch - got response:\n%s" % (response))
+                if 'error' in response:
+                    return "[ Twitch ] - Error!"
+
+                try:
+                    if link_type == "channel":
+                        if 'stream' in response and response['stream'] != None:
+                            data = response
+                        else:
+                        # Channel isn't live, so need to look up its info instead.
+                            link_type = 'stream'
+                            data_url = 'https://api.twitch.tv/kraken/channels/{channel_name}'.format(**link_info)
+                            request = requests.get(data_url, headers=headers)
+                            ok = request.status_code == requests.codes.ok
+                            data = {}
+                            extract = ""
+                            if not ok:
+                                self.log.error("SpiffyTitles: twitch HTTP %s: %s" % (request.status_code, request.text))
+                            else:
+                                response = json.loads(request.text)
+                                if not response:
+                                    self.log.error("SpiffyTitles: Error parsing Twitch JSON response")
+                                else:
+                                    if 'error' in response:
+                                        self.log.error("SpiffyTitles: twitch - error in JSON response")
+                                        return self.handler_default(url, channel)
+                                    try:
+                                        data = response
+                                    except KeyError as e:
+                                        self.log.error("SpiffyTitles: KeyError parsing Twitch.TV JSON response: %s" % (str(e)))
+
+                    elif link_type == "video":
+                        data = response
+                except KeyError as e:
+                    self.log.error("SpiffyTitles: KeyError parsing Twitch.TV JSON response: %s" % (str(e)))
+
+                if data:
+                    self.log.debug("SpiffyTitles: twitch - Got data '%s'" % (data))
+                    twitch_template = self.get_template(''.join(["twitch.", link_type, "Template"]), channel)
+                    if not twitch_template:
+                        self.log.debug("SpiffyTitles - twitch: bad template for %s" % (link_type))
+                    return "[ Twitch ] - Got data apparently"
+                else:
+                    self.log.debug("SpiffyTitles: twitch - falling back to default handler")
+                    return self.handler_default(url, channel)
+
+            else:
+                self.log.error("SpiffyTitles: Error parsing Twitch JSON response")
+        else:
+            self.log.error("SpiffyTitles: twitch HTTP %s: %s" % (request.status_code, request.text))
+        
+        return "Twitch handler reply"
 
     def is_valid_imgur_id(self, input):
         """
