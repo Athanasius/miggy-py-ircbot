@@ -1,0 +1,7 @@
+.*.swp
+*.conf.bak
+*.pid
+backup/
+conf/
+data/
+logs/
