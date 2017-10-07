@@ -678,7 +678,8 @@ class SpiffyTitles(callbacks.Plugin):
                             dislike_count = 0
                             comment_count = 0
                             favorite_count = 0
-                            pub_timet = snippet["publishedAt"]
+                            pub_timet = dateutil.parser.parse(snippet["publishedAt"])
+                            pub_timet = pub_timet.strftime('%Y-%m-%d %H:%M:%S %Z')
 
                             if "viewCount" in statistics:
                                 view_count = "{:,}".format(int(statistics["viewCount"]))
