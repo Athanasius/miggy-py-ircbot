@@ -3129,6 +3129,13 @@ supybot.plugins.SpiffyTitles.twitch.channelTemplate: [ Twitch.TV Channel ] {{use
 supybot.plugins.SpiffyTitles.twitch.clientID:
 
 ###
+# twitch.tv clip template
+#
+# Default value: 
+###
+supybot.plugins.SpiffyTitles.twitch.clipTemplate: [ Twitch.TV Clip ] {{curator}}{%if game%} | Game: {{game}}{% endif %}{% if title %} | Title: {{title}}{% endif %}{%if duration %} | Duration: {{duration}}{% endif %}{%if views %} | Views: {{views}}{% endif %}
+
+###
 # Whether to add additional information about Twitch.TV links
 #
 # Default value: True
