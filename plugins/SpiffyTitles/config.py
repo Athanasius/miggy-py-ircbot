@@ -134,6 +134,24 @@ conf.registerChannelValue(SpiffyTitles, 'imgurTemplate',
 conf.registerChannelValue(SpiffyTitles, 'imgurAlbumTemplate',
                         registry.String("^{%if section %} [{{section}}] {% endif -%}{%- if title -%} {{title}} :: {% endif %}{{image_count}} images :: {{view_count}} views :: {%if nsfw == None %}not sure if safe for work{% elif nsfw == True %}not safe for work!{% else %}safe for work{% endif %}", _("""imgur template""")))
 
+# Twitch API
+conf.registerGroup(SpiffyTitles, 'twitch')
+
+conf.registerChannelValue(SpiffyTitles.twitch, 'enabled',
+     registry.Boolean(True, _("""Whether to add additional information about Twitch.TV links""")))
+
+conf.registerGlobalValue(SpiffyTitles.twitch, 'clientID',
+                        registry.String("", _("""twitch client ID"""), private=True))
+
+conf.registerChannelValue(SpiffyTitles.twitch, 'channelTemplate',
+                        registry.String("", _("""twitch.tv channel template""")))
+
+conf.registerChannelValue(SpiffyTitles.twitch, 'streamTemplate',
+                        registry.String("", _("""twitch.tv stream template""")))
+
+conf.registerChannelValue(SpiffyTitles.twitch, 'videoTemplate',
+                        registry.String("", _("""twitch.tv video template""")))
+
 # Youtube API
 conf.registerGlobalValue(SpiffyTitles, 'youtubeDeveloperKey',
                         registry.String("", _("""Youtube developer key - required for Youtube handler."""), private=True))
