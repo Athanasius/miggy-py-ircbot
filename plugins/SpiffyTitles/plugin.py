@@ -18,6 +18,7 @@ import random
 import json
 import cgi
 import datetime
+import dateutil.parser
 from jinja2 import Template
 from datetime import timedelta
 import timeout_decorator
@@ -95,6 +96,7 @@ class SpiffyTitles(callbacks.Plugin):
     def add_twitch_handlers(self):
         self.handlers["twitch.tv"] = self.handler_twitch
         self.handlers["www.twitch.tv"] = self.handler_twitch
+        self.handlers["go.twitch.tv"] = self.handler_twitch
 
     def handler_dailymotion(self, url, info, channel):
         """
@@ -1116,13 +1118,13 @@ class SpiffyTitles(callbacks.Plugin):
 
         patterns = {
             "channel": {
-                "pattern": r"^http(s)?:\/\/(www\.)?twitch\.tv\/(?P<channel_name>[^\/]+)",
+                "pattern": r"^http(s)?:\/\/(www\.|go\.)?twitch\.tv\/(?P<channel_name>[^\/]+)",
 #                "pattern": r"^http(s)?:\/\/(www\.)?twitch\.tv\/(?P<channel_name>[^\/]+)(?P<video_pre>\/|\/dashboard)?$",
                 "url": "https://api.twitch.tv/kraken/streams/{channel_name}"
             },
             "video": {
-                "pattern": r"^http(s)?:\/\/(www\.)?twitch\.tv\/(?P<channel_name>[^\/]+)\/(?P<video_pre>.+)\/(?P<video_id>[0-9]+)$",
-                "url": "https://api.twitch.tv/kraken/videos/{video_pre}{video_id}"
+                "pattern": r"^http(s)?:\/\/(www\.|go\.)?twitch\.tv\/videos/(?P<video_id>[0-9]+)$",
+                "url": "https://api.twitch.tv/kraken/videos/{video_id}"
             }
         }
 
@@ -1141,7 +1143,7 @@ class SpiffyTitles(callbacks.Plugin):
         agent = self.get_user_agent()
         headers = {
             "User-Agent": agent,
-            "Accept": "application/vnd.twitchtv.3+json",
+            "Accept": "application/vnd.twitchtv.5+json",
             "Client-ID": twitch_client_id,
             "Accept-Language": "en-gb;q=0.8, en;q=0.7"
         }
@@ -1164,10 +1166,11 @@ class SpiffyTitles(callbacks.Plugin):
                 try:
                     if link_type == "channel":
                         if 'stream' in response and response['stream'] != None:
-                            data = response
+                            data = response['stream']['channel']
+                            link_type = 'stream'
                         else:
                         # Channel isn't live, so need to look up its info instead.
-                            link_type = 'stream'
+                            link_type = 'channel'
                             data_url = 'https://api.twitch.tv/kraken/channels/{channel_name}'.format(**link_info)
                             request = requests.get(data_url, headers=headers)
                             ok = request.status_code == requests.codes.ok
@@ -1198,7 +1201,30 @@ class SpiffyTitles(callbacks.Plugin):
                     twitch_template = self.get_template(''.join(["twitch.", link_type, "Template"]), channel)
                     if not twitch_template:
                         self.log.debug("SpiffyTitles - twitch: bad template for %s" % (link_type))
-                    return "[ Twitch ] - Got data apparently"
+                        reply = "[ Twitch.TV ] - Got data, but template was bad"
+                    else:
+                        duration = data.get('length', '')
+                        if duration:
+                            duration = self.get_duration_from_seconds(duration)
+
+                        recordedat = data.get('recorded_at', '')
+                        if recordedat:
+                            recorded_date = dateutil.parser.parse(recordedat)
+                            recordedat = recorded_date.strftime('%Y-%m-%d %H:%M:%S %Z')
+
+                        template_vars = {
+                            "user": data.get('display_name', ''),
+                            "game": data.get('game', ''),
+                            "status": data.get('status', ''),
+                            "views": '{:,}'.format(data.get('views', 0)),
+                            "followers": '{:,}'.format(data.get('followers', 0)),
+                            "duration": duration,
+                            "recordedat": recordedat
+                        }
+                        reply = twitch_template.render(template_vars)
+                        self.log.debug("SpiffyTitles: twitch - reply = '%s'" % (reply))
+
+                    return reply
                 else:
                     self.log.debug("SpiffyTitles: twitch - falling back to default handler")
                     return self.handler_default(url, channel)
