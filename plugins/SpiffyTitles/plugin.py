@@ -1055,7 +1055,7 @@ class SpiffyTitles(callbacks.Plugin):
             else:
                 age = '{}d'.format(age_days % 365)
                 if age_days > 365:
-                    age = '{}y, '.format(age_days / 365) + age
+                    age = '{}y, '.format(int(age_days / 365)) + age
                 age = age + " ago"
             if link_type == "thread":
                 link_type = "linkThread"
