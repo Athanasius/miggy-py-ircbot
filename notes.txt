@@ -10,8 +10,10 @@ TODO:
 		community.elitedangerous.com (galnet)
 		Coriolis.edcd.io
 		Reddit						DONE
-		Twitch
+		Twitch						DONE
 		<ignores>					DONE
+		imdb						DISABLED
+		wikipedia					DONE
 
 	RSS feeds - need the forum de-dupe code, so likely need to make
 	a new plugin based on the existing one.
