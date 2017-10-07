@@ -97,6 +97,7 @@ class SpiffyTitles(callbacks.Plugin):
         self.handlers["twitch.tv"] = self.handler_twitch
         self.handlers["www.twitch.tv"] = self.handler_twitch
         self.handlers["go.twitch.tv"] = self.handler_twitch
+        self.handlers["clips.twitch.tv"] = self.handler_twitch
 
     def handler_dailymotion(self, url, info, channel):
         """
@@ -1123,8 +1124,12 @@ class SpiffyTitles(callbacks.Plugin):
                 "url": "https://api.twitch.tv/kraken/streams/{channel_name}"
             },
             "video": {
-                "pattern": r"^http(s)?:\/\/(www\.|go\.)?twitch\.tv\/videos/(?P<video_id>[0-9]+)$",
+                "pattern": r"^http(s)?:\/\/(www\.|go\.|player\.)?twitch\.tv\/(videos/|\?video=v)(?P<video_id>[0-9]+)",
                 "url": "https://api.twitch.tv/kraken/videos/{video_id}"
+            },
+            "clip": {
+                "pattern": r"http(s)?:\/\/clips\.twitch\.tv\/(?P<clip>.+)$",
+                "url": "https://api.twitch.tv/kraken/clips/{clip}"
             }
         }
 
@@ -1143,7 +1148,7 @@ class SpiffyTitles(callbacks.Plugin):
         agent = self.get_user_agent()
         headers = {
             "User-Agent": agent,
-            "Accept": "application/vnd.twitchtv.5+json",
+            "Accept": "application/vnd.twitchtv.v5+json",
             "Client-ID": twitch_client_id,
             "Accept-Language": "en-gb;q=0.8, en;q=0.7"
         }
@@ -1193,6 +1198,8 @@ class SpiffyTitles(callbacks.Plugin):
 
                     elif link_type == "video":
                         data = response
+                    elif link_type == 'clip':
+                        data = response
                 except KeyError as e:
                     self.log.error("SpiffyTitles: KeyError parsing Twitch.TV JSON response: %s" % (str(e)))
 
@@ -1202,6 +1209,19 @@ class SpiffyTitles(callbacks.Plugin):
                     if not twitch_template:
                         self.log.debug("SpiffyTitles - twitch: bad template for %s" % (link_type))
                         reply = "[ Twitch.TV ] - Got data, but template was bad"
+                    elif link_type == 'clip':
+                        duration = data.get('duration', '')
+                        if duration:
+                            duration = self.get_duration_from_seconds(duration)
+
+                        template_vars = {
+                            "curator": data['curator'].get('display_name', ''),
+                            "game": data.get('game', ''),
+                            "title": data.get('title', ''),
+                            "duration": duration,
+                            "views": data.get('views', '')
+                        }
+                        reply = twitch_template.render(template_vars)
                     else:
                         duration = data.get('length', '')
                         if duration:
@@ -1222,8 +1242,8 @@ class SpiffyTitles(callbacks.Plugin):
                             "recordedat": recordedat
                         }
                         reply = twitch_template.render(template_vars)
-                        self.log.debug("SpiffyTitles: twitch - reply = '%s'" % (reply))
 
+                    self.log.debug("SpiffyTitles: twitch - reply = '%s'" % (reply))
                     return reply
                 else:
                     self.log.debug("SpiffyTitles: twitch - falling back to default handler")
@@ -1233,6 +1253,7 @@ class SpiffyTitles(callbacks.Plugin):
                 self.log.error("SpiffyTitles: Error parsing Twitch JSON response")
         else:
             self.log.error("SpiffyTitles: twitch HTTP %s: %s" % (request.status_code, request.text))
+            return '[ Twitch.TV ] - Video Not Found'
         
         return "Twitch handler reply"
 

@@ -152,6 +152,9 @@ conf.registerChannelValue(SpiffyTitles.twitch, 'streamTemplate',
 conf.registerChannelValue(SpiffyTitles.twitch, 'videoTemplate',
                         registry.String("", _("""twitch.tv video template""")))
 
+conf.registerChannelValue(SpiffyTitles.twitch, 'clipTemplate',
+                        registry.String("", _("""twitch.tv clip template""")))
+
 # Youtube API
 conf.registerGlobalValue(SpiffyTitles, 'youtubeDeveloperKey',
                         registry.String("", _("""Youtube developer key - required for Youtube handler."""), private=True))
