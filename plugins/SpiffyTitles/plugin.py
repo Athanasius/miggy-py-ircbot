@@ -1239,6 +1239,9 @@ class SpiffyTitles(callbacks.Plugin):
                             recorded_date = dateutil.parser.parse(recordedat)
                             recordedat = recorded_date.strftime('%Y-%m-%d %H:%M:%S %Z')
 
+                        # Channel info, like display_name, may be in the sub-object 'channel'
+                        if 'display_name' not in data and data['channel']['display_name'] is not None:
+                            data['display_name'] = data['channel']['display_name']
                         template_vars = {
                             "user": data.get('display_name', ''),
                             "game": data.get('game', ''),
@@ -1443,10 +1446,10 @@ class SpiffyTitles(callbacks.Plugin):
         if ok:
             self.log.debug("SpiffyTitles: communityed - got article HTML")
             tree = html.fromstring(request.content)
-            if tree:
+            if tree is not None:
                 try:
                     article_title = tree.xpath('//div[@class="article"]/h3[@class="hiLite galnetNewsArticleTitle"]/a//text()')
-                    if article_title:
+                    if article_title is not None:
                         self.log.debug("SpiffyTitles: communityed - got title h3 '%s'" % (article_title))
                         article = {}
                         article['title'] = re.sub('^ *', '', article_title[0])
