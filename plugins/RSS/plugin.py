@@ -110,8 +110,8 @@ class Feed:
                 utils.structures.TruncatableSet()
 
     def __repr__(self):
-        return 'Feed(%r, %r, %b, <bool>, %r)' % \
-                (self.name, self.url, self.initial, self.announced_entries)
+        return 'Feed(%r, %r, <bool>, %r)' % (self.name, self.url, self.announced_entries)
+#        return 'Feed(%r, %r, %b, <bool>, %r)' % (self.name, self.url, self.initial, self.announced_entries)
 
     def get_command(self, plugin):
         docstring = format(_("""[<number of headlines>]
@@ -415,6 +415,16 @@ class RSS(callbacks.Plugin):
             template = self.registryValue(key_name, channel)
         date = entry.get('published_parsed')
         date = utils.str.timestamp(date)
+        self.log.debug("RSS: format_entry - checking entry has a link...")
+        if not entry.get('link'):
+            self.log.debug("RSS: format_entry - no link in entry")
+            self.log.debug("RSS: format_entry - feed: %s" % (feed))
+            if feed.link == 'https://www.elitedangerous.com/galnet-rss' and entry.get('guid'):
+                link = 'https://community.elitedangerous.com/en/galnet/uid' + entry.get('guid')
+                entry.put('link', link)
+        else:
+            self.log.debug("RSS: format_entry - entry has link, using that")
+
         s = string.Template(template).substitute(
                 entry,
                 feed_name=feed.name,
