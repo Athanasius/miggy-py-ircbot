@@ -7,7 +7,7 @@ TODO:
 	perl-Cmdr
 		YouTube						DONE
 		Imgur						DONE
-		community.elitedangerous.com (galnet)
+		community.elitedangerous.com (galnet)		DONE
 		Coriolis.edcd.io, coriolis.io & eddp.co		Ignored
 		Reddit						DONE
 		Twitch						DONE
