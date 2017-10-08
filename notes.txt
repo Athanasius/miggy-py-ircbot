@@ -8,7 +8,7 @@ TODO:
 		YouTube						DONE
 		Imgur						DONE
 		community.elitedangerous.com (galnet)
-		Coriolis.edcd.io
+		Coriolis.edcd.io, coriolis.io & eddp.co		Ignored
 		Reddit						DONE
 		Twitch						DONE
 		<ignores>					DONE
