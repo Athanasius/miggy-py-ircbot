@@ -26,6 +26,8 @@ import unicodedata
 import supybot.ircdb as ircdb
 import supybot.log as log
 import pytz
+from lxml import html
+from lxml.etree import XPathEvalError
 
 if sys.version_info[0] >= 3:
     from urllib.parse import urlencode, urlparse, parse_qsl
@@ -74,6 +76,7 @@ class SpiffyTitles(callbacks.Plugin):
         self.add_wikipedia_handlers()
         self.add_reddit_handlers()
         self.add_twitch_handlers()
+        self.add_communityed_handlers()
 
     def add_dailymotion_handlers(self):
         self.handlers["www.dailymotion.com"] = self.handler_dailymotion
@@ -98,6 +101,9 @@ class SpiffyTitles(callbacks.Plugin):
         self.handlers["www.twitch.tv"] = self.handler_twitch
         self.handlers["go.twitch.tv"] = self.handler_twitch
         self.handlers["clips.twitch.tv"] = self.handler_twitch
+
+    def add_communityed_handlers(self):
+        self.handlers["community.elitedangerous.com"] = self.handler_communityed
 
     def handler_dailymotion(self, url, info, channel):
         """
@@ -1394,6 +1400,74 @@ class SpiffyTitles(callbacks.Plugin):
             return title
         else:
             return self.handler_default(url, channel)
+
+    def handler_communityed(self, url, info, channel):
+        """
+        Handles retrieving information about Elite: Dangerous Community site URLs.
+
+        """
+        community_ed_handler_enabled = self.registryValue("communityedHandlerEnabled", channel=channel)
+        if not community_ed_handler_enabled:
+            return self.handler_default(url, channel)
+        log.debug("SpiffyTitles: calling communityed handler for %s" % url)
+
+        patterns = {
+            "galnet": {
+                "pattern": r"^http(s)?:\/\/community\.elitedangerous\.com\/en\/galnet\/uid\/(?P<uid>[^/]+)$",
+            }
+        }
+
+        for name in patterns:
+            match = re.search(patterns[name]['pattern'], url)
+            if match:
+                link_type = name
+                link_info = match.groupdict()
+                break
+
+        if not match:
+            self.log.debug("SpiffyTitles: communityed - kicking to default handler")
+            return self.handler_default(url, channel)
+
+        agent = self.get_user_agent()
+        headers = {
+            "User-Agent": agent,
+            "Accept-Language": "en-gb;q=0.8, en;q=0.7"
+        }
+
+        self.log.debug("SpiffyTitles: communityed - requesting %s" % (url))
+
+        request = requests.get(url, headers=headers)
+        ok = request.status_code == requests.codes.ok
+
+        title = ""
+        if ok:
+            self.log.debug("SpiffyTitles: communityed - got article HTML")
+            tree = html.fromstring(request.content)
+            if tree:
+                try:
+                    article_title = tree.xpath('//div[@class="article"]/h3[@class="hiLite galnetNewsArticleTitle"]/a//text()')
+                    if article_title:
+                        self.log.debug("SpiffyTitles: communityed - got title h3 '%s'" % (article_title))
+                        article = {}
+                        article['title'] = re.sub('^ *', '', article_title[0])
+    
+                        try:
+                            article_date = tree.xpath('//div[@class="article"]/div[@class="i_right"]/p//text()')
+                            article['date'] = article_date[0]
+                        except XPathEvalError as e:
+                            self.log.error("SpiffyTitles: communityed - Exception from tree.xpath(article_date): %s" % (e))
+                        title = 'GalNet News: ' + article['date'] + ' "' + article['title'] + '"'
+                    else:
+                        self.log.error("SpiffyTitles: communityed - Failed to parse title h3 from article")
+                except XPathEvalError as e:
+                    self.log.error("SpiffyTitles: communityed - Exception from tree.xpath(article_title): %s" % (e))
+            else:
+                self.log.error("SpiffyTitles: communityed - Failed to parse HTML tree from content")
+                
+        if not title:
+            title = self.handler_default(url, channel)
+
+        return title
 
     def get_readable_file_size(self, num, suffix="B"):
         """

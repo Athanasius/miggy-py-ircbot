@@ -56,6 +56,9 @@ conf.registerChannelValue(SpiffyTitles, 'imgurHandlerEnabled',
 conf.registerChannelValue(SpiffyTitles, 'imdbHandlerEnabled',
      registry.Boolean(True, _("""Whether to add additional information about IMDB links""")))
 
+conf.registerChannelValue(SpiffyTitles, 'communityedHandlerEnabled',
+     registry.Boolean(True, _("""Whether to add additional information about Elite: Dangerous Community Site links""")))
+
 # URL regex
 conf.registerGlobalValue(SpiffyTitles, 'urlRegularExpression',
      registry.String(r"(https?:\/\/(?:www\.|(?!www))[^\s\.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})", _("""This regular expression will be used to match URLs""")))
