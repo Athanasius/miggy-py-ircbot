@@ -18,6 +18,7 @@ TODO:
 	RSS feeds - need the forum de-dupe code, so likely need to make
 	a new plugin based on the existing one.
 		Both now working with sensible polling periods.
+		 and with custom messages.
 
 	Review commands on perl-Cmdr and ensure py-Cmdr is as close as
 	possible, including being as quiet as possible in the channel.
