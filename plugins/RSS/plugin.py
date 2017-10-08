@@ -39,6 +39,7 @@ import string
 import socket
 import threading
 import feedparser
+from pprint import pformat
 
 import supybot.conf as conf
 import supybot.utils as utils
@@ -110,8 +111,8 @@ class Feed:
                 utils.structures.TruncatableSet()
 
     def __repr__(self):
-        return 'Feed(%r, %r, %b, <bool>, %r)' % \
-                (self.name, self.url, self.initial, self.announced_entries)
+        return 'Feed(%r, %r, <bool>, %r)' % \
+                (self.name, self.url, self.announced_entries)
 
     def get_command(self, plugin):
         docstring = format(_("""[<number of headlines>]
@@ -294,6 +295,7 @@ class RSS(callbacks.Plugin):
     # Feed fetching
 
     def update_feed(self, feed):
+        self.log.debug("RSS: update_feed for '%s'" % (feed.name))
         handlers = []
         if utils.web.proxy():
             handlers.append(ProxyHandler(
@@ -301,17 +303,24 @@ class RSS(callbacks.Plugin):
             handlers.append(ProxyHandler(
                 {'https': utils.force(utils.web.proxy())}))
         with feed.lock:
+            self.log.debug(" RSS: update_feed '%s' inside feed.lock" % (feed.name))
             d = feedparser.parse(feed.url, etag=feed.etag,
                     modified=feed.modified, handlers=handlers)
             if 'status' not in d or d.status != 304: # Not modified
+                self.log.debug("  RSS: update_feed '%s' feed updated" % (feed.name))
                 if 'etag' in d:
                     feed.etag = d.etag
                 if 'modified' in d:
                     feed.modified = d.modified
                 feed.data = d.feed
                 feed.entries = d.entries
+                if feed.name == "edgalnet":
+                    self.log.debug("RSS: updated_feed '%s' - producing galnet links from IDs" % (feed.name))
+                    for e in feed.entries:
+                        e['link'] = re.sub('/en/', '/en/galnet/uid/', e.get('id'))
                 feed.last_update = time.time()
             (initial, feed.initial) = (feed.initial, False)
+        self.log.debug(" RSS: announcing feed '%s'" % (feed.name))
         self.announce_feed(feed, initial)
 
     def update_feed_in_thread(self, feed):
@@ -323,6 +332,7 @@ class RSS(callbacks.Plugin):
         t.start()
 
     def update_feed_if_needed(self, feed):
+        self.log.debug("RSS: update_feed_if_needed for '%s'" % (feed.name))
         if self.is_expired(feed):
             self.update_feed(feed)
 
@@ -416,15 +426,6 @@ class RSS(callbacks.Plugin):
             template = self.registryValue(key_name, channel)
         date = entry.get('published_parsed')
         date = utils.str.timestamp(date)
-        self.log.debug("RSS: format_entry - checking entry has a link...")
-        if not entry.get('link'):
-            self.log.debug("RSS: format_entry - no link in entry")
-            self.log.debug("RSS: format_entry - feed: %s" % (feed))
-            if feed.link == 'https://www.elitedangerous.com/galnet-rss' and entry.get('guid'):
-                link = 'https://community.elitedangerous.com/en/galnet/uid' + entry.get('guid')
-                entry.put('link', link)
-        else:
-            self.log.debug("RSS: format_entry - entry has link, using that")
 
         s = string.Template(template).substitute(
                 entry,
@@ -551,6 +552,7 @@ class RSS(callbacks.Plugin):
         else:
             channel = None
         self.update_feed_if_needed(feed)
+        self.log.debug("RSS: rss - updated_feed_if_needed() called")
         entries = feed.entries
         if not entries:
             irc.error(_('Couldn\'t get RSS feed.'))
