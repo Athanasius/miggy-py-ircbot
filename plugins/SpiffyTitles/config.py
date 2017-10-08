@@ -56,9 +56,6 @@ conf.registerChannelValue(SpiffyTitles, 'imgurHandlerEnabled',
 conf.registerChannelValue(SpiffyTitles, 'imdbHandlerEnabled',
      registry.Boolean(True, _("""Whether to add additional information about IMDB links""")))
 
-conf.registerChannelValue(SpiffyTitles, 'communityedHandlerEnabled',
-     registry.Boolean(True, _("""Whether to add additional information about Elite: Dangerous Community Site links""")))
-
 # URL regex
 conf.registerGlobalValue(SpiffyTitles, 'urlRegularExpression',
      registry.String(r"(https?:\/\/(?:www\.|(?!www))[^\s\.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})", _("""This regular expression will be used to match URLs""")))
@@ -227,3 +224,15 @@ conf.registerChannelValue(SpiffyTitles.reddit, 'userTemplate',
 
 conf.registerChannelValue(SpiffyTitles.reddit, 'maxChars',
                         registry.Integer(400, _("""Length of response (title/extract will be cut to fit).""")))
+
+
+# Elite: Dangerous Community Site
+conf.registerGroup(SpiffyTitles, 'communityed')
+conf.registerChannelValue(SpiffyTitles.communityed, 'enabled',
+     registry.Boolean(True, _("""Whether to add additional information about Elite: Dangerous Community Site links""")))
+
+conf.registerChannelValue(SpiffyTitles.communityed, 'galnetTemplate',
+    registry.String(u"GalNet News:{%if date %} {{date}}{% endif %}{%if title %} \"{{title}}\"{% endif %}{%if body %} - {{body}}{% endif %}", _("""Template used for Elite: Dangerous Community Galnet articles""")))
+
+conf.registerChannelValue(SpiffyTitles.communityed, 'galnetMaxChars',
+                        registry.Integer(400, _("""Length of response (body will be cut to fit).""")))

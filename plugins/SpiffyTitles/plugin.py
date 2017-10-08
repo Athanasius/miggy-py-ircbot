@@ -1406,7 +1406,7 @@ class SpiffyTitles(callbacks.Plugin):
         Handles retrieving information about Elite: Dangerous Community site URLs.
 
         """
-        community_ed_handler_enabled = self.registryValue("communityedHandlerEnabled", channel=channel)
+        community_ed_handler_enabled = self.registryValue("communityed.enabled", channel=channel)
         if not community_ed_handler_enabled:
             return self.handler_default(url, channel)
         log.debug("SpiffyTitles: calling communityed handler for %s" % url)
@@ -1439,7 +1439,7 @@ class SpiffyTitles(callbacks.Plugin):
         request = requests.get(url, headers=headers)
         ok = request.status_code == requests.codes.ok
 
-        title = ""
+        reply = ""
         if ok:
             self.log.debug("SpiffyTitles: communityed - got article HTML")
             tree = html.fromstring(request.content)
@@ -1456,7 +1456,21 @@ class SpiffyTitles(callbacks.Plugin):
                             article['date'] = article_date[0]
                         except XPathEvalError as e:
                             self.log.error("SpiffyTitles: communityed - Exception from tree.xpath(article_date): %s" % (e))
-                        title = 'GalNet News: ' + article['date'] + ' "' + article['title'] + '"'
+
+                        try:
+                            article_body = tree.xpath('//div[@class="article"]/p//text()')
+                            article['body'] = article_body[0]
+                        except XPathEvalError as e:
+                            self.log.error("SpiffyTitles: communityed - Exception from tree.xpath(article_body): %s" % (e))
+
+                        galnet_template = self.get_template('communityed.galnetTemplate', channel)
+                        reply = galnet_template.render(article)
+                        max_chars = self.registryValue("communityed.galnetMaxChars", channel=channel)
+                        max_body_chars = max_chars + len(article['body']) - len(reply)
+                        if len(article['body']) > max_body_chars:
+                            article['body'] = article['body'][:max_body_chars - 3].rsplit(' ', 1)[0].rstrip(',.') + '...'
+                        reply = galnet_template.render(article)
+                        #reply = 'GalNet News: ' + article['date'] + ' "' + article['title'] + '" - ' + article['body']
                     else:
                         self.log.error("SpiffyTitles: communityed - Failed to parse title h3 from article")
                 except XPathEvalError as e:
@@ -1464,10 +1478,10 @@ class SpiffyTitles(callbacks.Plugin):
             else:
                 self.log.error("SpiffyTitles: communityed - Failed to parse HTML tree from content")
                 
-        if not title:
-            title = self.handler_default(url, channel)
+        if not reply:
+            reply = self.handler_default(url, channel)
 
-        return title
+        return reply
 
     def get_readable_file_size(self, num, suffix="B"):
         """
