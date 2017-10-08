@@ -110,8 +110,8 @@ class Feed:
                 utils.structures.TruncatableSet()
 
     def __repr__(self):
-        return 'Feed(%r, %r, <bool>, %r)' % (self.name, self.url, self.announced_entries)
-#        return 'Feed(%r, %r, %b, <bool>, %r)' % (self.name, self.url, self.initial, self.announced_entries)
+        return 'Feed(%r, %r, %b, <bool>, %r)' % \
+                (self.name, self.url, self.initial, self.announced_entries)
 
     def get_command(self, plugin):
         docstring = format(_("""[<number of headlines>]
@@ -240,7 +240,7 @@ class RSS(callbacks.Plugin):
                 particular feed.""")))
 
     def register_feed(self, name, url, initial,
-            plugin_is_loading, announced=[]):
+            plugin_is_loading, announced=None):
         self.feed_names[name] = url
         self.feeds[url] = Feed(name, url, initial,
                 plugin_is_loading, announced)
@@ -361,7 +361,7 @@ class RSS(callbacks.Plugin):
         new_entries = self.get_new_entries(feed)
 
         order = self.registryValue('sortFeedItems')
-        new_entries = sort_feed_items(new_entries, order)
+        new_entries = sort_feed_items(new_entries, 'newestFirst')
         for irc in world.ircs:
             for channel in irc.state.channels:
                 if feed.name not in self.registryValue('announce', channel):
@@ -369,11 +369,12 @@ class RSS(callbacks.Plugin):
                 if initial:
                     n = self.registryValue('initialAnnounceHeadlines', channel)
                     if n:
-                        announced_entries = new_entries[-n:]
+                        announced_entries = new_entries[0:n]
                     else:
                         announced_entries = []
                 else:
                     announced_entries = new_entries
+                announced_entries = sort_feed_items(announced_entries, order)
                 for entry in announced_entries:
                     self.announce_entry(irc, channel, feed, entry)
 
