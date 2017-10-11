@@ -50,6 +50,7 @@ class QuakeNet(callbacks.Plugin):
         self.__parent.__init__(irc)
 
         self.qauthed = False
+        self.waitingJoins = {}
 
     def reset(self):
         self.qauthed = False
@@ -99,11 +100,12 @@ class QuakeNet(callbacks.Plugin):
                     return None
         return msg
 
-    def on396(self, irc, msg):
+    def do396(self, irc, msg):
         """
         Uses the "X is now your hidden host" messages to trigger post-auth with Q actions.  Currently only the delayed channel JOINs.
         """
     # irc_396:  'port80a.se.quakenet.org' 'Cmdr.users.quakenet.org :is now your hidden host' [Cmdr.users.quakenet.org, is now your hidden host]
+        self.log.debug("QuakeNet: on396")
         self.qauthed = True
         waitingJoins = self.waitingJoins.pop(irc.network, None)
         if waitingJoins:
