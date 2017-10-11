@@ -55,6 +55,8 @@ class QuakeNet(callbacks.Plugin):
         qaccountname = self.registryValue("qAccountNickname")
         qaccountpassword = self.registryValue("qAccountPassword")
 
+        if qnick is None or qaccountname is None or qaccountpassword is None:
+            return
         if qaccountname is not '' and qaccountpassword is not '' and qnick is not '':
             self.log.info("QuakeNet: sending Q Auth command: AUTH")
             irc.queueMsg(ircmsgs.privmsg(qnick, "AUTH " + qaccountname + " " + qaccountpassword))

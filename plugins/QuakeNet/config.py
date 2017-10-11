@@ -57,7 +57,7 @@ conf.registerGlobalValue(QuakeNet, 'qAccountNickname',
     registry.String('', _("""Bot's Q Account Nickname""")))
 
 conf.registerGlobalValue(QuakeNet, 'qAccountPassword',
-    registry.String('', _("""Bot's Q Account Password""")))
+    registry.String('', _("""Bot's Q Account Password"""), private=True))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
