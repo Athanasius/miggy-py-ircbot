@@ -56,6 +56,10 @@ class QuakeNet(callbacks.Plugin):
         self.waitingJoins = {}
 
     def do376(self, irc, msg):
+    """
+    Catches the '376' message at the end of server MOTD in order to initiate
+    authing with 'Q'.
+    """
         self.log.debug("QuakeNet: do376 (end of MTOD), irc.network = '%s'" % (irc.network))
         if irc.network != "quakenet":
             return
@@ -73,11 +77,18 @@ class QuakeNet(callbacks.Plugin):
             irc.queueMsg(ircmsgs.privmsg(qnick, "AUTH " + qaccountname + " " + qaccountpassword))
 
     def doJoin(self, irc, msg):
+    """
+    Uses the join event to send our greeting to the channel.
+    """
         channel = msg.args[0]
         if ircutils.strEqual(irc.nick, msg.nick):
             irc.queueMsg(ircmsgs.privmsg(channel, "Cmdr Jameson reporting for duty! <o"))
 
     def outFilter(self, irc, msg):
+    """
+    Filters outgoing messages for JOIN messages, in order to delay them until
+    after authed with Q.
+    """
         if irc.network == "quakenet" and msg.command == 'JOIN':
             if not self.qauthed:
                 if self.registryValue('noJoinsUntilQAuthed'):
@@ -89,6 +100,10 @@ class QuakeNet(callbacks.Plugin):
         return msg
 
     def on396(self, irc, msg):
+    """
+    Uses the "X is now your hidden host" messages to trigger post-auth with Q
+    actions.  Currently only the delayed channel JOINs.
+    """
     # irc_396:  'port80a.se.quakenet.org' 'Cmdr.users.quakenet.org :is now your hidden host' [Cmdr.users.quakenet.org, is now your hidden host]
         self.qauthed = True
         waitingJoins = self.waitingJoins.pop(irc.network, None)
