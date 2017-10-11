@@ -59,5 +59,10 @@ conf.registerGlobalValue(QuakeNet, 'qAccountNickname',
 conf.registerGlobalValue(QuakeNet, 'qAccountPassword',
     registry.String('', _("""Bot's Q Account Password"""), private=True))
 
+conf.registerGlobalValue(QuakeNet, 'noJoinsUntilQauthed',
+    registry.Boolean(False, _("""Determines whether the bot will not join any
+    channels until it is Q Authed.  This may be useful, for instances, if
+    you have a vhost that isn't set until you're Q Authed, or if you're
+    joining +r channels that won't allow you to join unless you Q Authed.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

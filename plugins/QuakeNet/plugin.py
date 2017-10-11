@@ -49,8 +49,19 @@ class QuakeNet(callbacks.Plugin):
         self.__parent = super(QuakeNet, self)
         self.__parent.__init__(irc)
 
+        self.qauthed = False
+
+    def reset(self):
+        self.qauthed = False
+        self.waitingJoins = {}
+
     def do376(self, irc, msg):
-        self.log.debug("QuakeNet: do376 (end of MTOD)")
+        self.log.debug("QuakeNet: do376 (end of MTOD), irc.network = '%s'" % (irc.network))
+        if irc.network != "quakenet":
+            return
+
+        self.qauthed = False
+
         qnick = self.registryValue("qNickname")
         qaccountname = self.registryValue("qAccountNickname")
         qaccountpassword = self.registryValue("qAccountPassword")
@@ -65,6 +76,25 @@ class QuakeNet(callbacks.Plugin):
         channel = msg.args[0]
         if ircutils.strEqual(irc.nick, msg.nick):
             irc.queueMsg(ircmsgs.privmsg(channel, "Cmdr Jameson reporting for duty! <o"))
+
+    def outFilter(self, irc, msg):
+        if irc.network == "quakenet" and msg.command == 'JOIN':
+            if not self.qauthed:
+                if self.registryValue('noJoinsUntilQAuthed'):
+                    self.log.info('Holding JOIN to %s until Q Authed.',
+                                  msg.args[0])
+                    self.waitingJoins.setdefault(irc.network, [])
+                    self.waitingJoins[irc.network].append(msg)
+                    return None
+        return msg
+
+    def on396(self, irc, msg):
+    # irc_396:  'port80a.se.quakenet.org' 'Cmdr.users.quakenet.org :is now your hidden host' [Cmdr.users.quakenet.org, is now your hidden host]
+        self.qauthed = True
+        waitingJoins = self.waitingJoins.pop(irc.network, None)
+        if waitingJoins:
+            for m in waitingJoins:
+                irc.sendMsg(m)
 
 Class = QuakeNet
 
