@@ -65,4 +65,6 @@ conf.registerGlobalValue(QuakeNet, 'noJoinsUntilQauthed',
     you have a vhost that isn't set until you're Q Authed, or if you're
     joining +r channels that won't allow you to join unless you Q Authed.""")))
 
+conf.registerGlobalValue(QuakeNet, 'channelGreeting',
+    registry.String('', _("""Bot's message to send to a channel when it has just joined.""")))
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
