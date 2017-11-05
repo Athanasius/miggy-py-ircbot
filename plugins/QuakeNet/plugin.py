@@ -56,11 +56,19 @@ class QuakeNet(callbacks.Plugin):
         self.qauthed = False
         self.waitingJoins = {}
 
+    def do422(self, irc, msg):
+        """
+        Catches the '422' "MOTD File is missing" message, and treats the
+        same as 376
+        """
+        self.log.debug("QuakeNet: do422 (no MOTD file), irc.network = '%s'" % (irc.network))
+        self.do376(irc, msg)
+
     def do376(self, irc, msg):
         """
         Catches the '376' message at the end of server MOTD in order to initiate authing with 'Q'.
         """
-        self.log.debug("QuakeNet: do376 (end of MTOD), irc.network = '%s'" % (irc.network))
+        self.log.debug("QuakeNet: do376 (end of MOTD), irc.network = '%s'" % (irc.network))
         if irc.network != "quakenet":
             return
 
@@ -105,7 +113,7 @@ class QuakeNet(callbacks.Plugin):
         Uses the "X is now your hidden host" messages to trigger post-auth with Q actions.  Currently only the delayed channel JOINs.
         """
     # irc_396:  'port80a.se.quakenet.org' 'Cmdr.users.quakenet.org :is now your hidden host' [Cmdr.users.quakenet.org, is now your hidden host]
-        self.log.debug("QuakeNet: on396")
+        self.log.debug("QuakeNet: do396")
         self.qauthed = True
         waitingJoins = self.waitingJoins.pop(irc.network, None)
         if waitingJoins:
