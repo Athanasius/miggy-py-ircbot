@@ -1128,7 +1128,7 @@ class SpiffyTitles(callbacks.Plugin):
             "channel": {
                 "pattern": r"^http(s)?:\/\/(www\.|go\.)?twitch\.tv\/(?P<channel_name>[^\/]+)",
 #                "pattern": r"^http(s)?:\/\/(www\.)?twitch\.tv\/(?P<channel_name>[^\/]+)(?P<video_pre>\/|\/dashboard)?$",
-                "url": "https://api.twitch.tv/kraken/streams/{channel_name}"
+                "url": "https://api.twitch.tv/helix/streams?user_login={channel_name}"
             },
             "video": {
                 "pattern": r"^http(s)?:\/\/(www\.|go\.|player\.)?twitch\.tv\/(videos/|\?video=v)(?P<video_id>[0-9]+)",
@@ -1177,13 +1177,16 @@ class SpiffyTitles(callbacks.Plugin):
 
                 try:
                     if link_type == "channel":
-                        if 'stream' in response and response['stream'] != None:
-                            data = response['stream']['channel']
+                        self.log.debug("SpiffyTitles: Twitch: link_type is channel")
+                        if 'data' in response and response['data']:
+                            self.log.debug("SpiffyTitles: Twitch: Got data[0]")
+                            data = response['data'][0]
                             link_type = 'stream'
                         else:
+                            self.log.debug("SpiffyTitles: Twitch: No data[0]")
                         # Channel isn't live, so need to look up its info instead.
                             link_type = 'channel'
-                            data_url = 'https://api.twitch.tv/kraken/channels/{channel_name}'.format(**link_info)
+                            data_url = 'https://api.twitch.tv/helix/users?login={channel_name}'.format(**link_info)
                             request = requests.get(data_url, headers=headers)
                             ok = request.status_code == requests.codes.ok
                             data = {}
@@ -1199,7 +1202,7 @@ class SpiffyTitles(callbacks.Plugin):
                                         self.log.error("SpiffyTitles: twitch - error in JSON response")
                                         return self.handler_default(url, channel)
                                     try:
-                                        data = response
+                                        data = response['data'][0]
                                     except KeyError as e:
                                         self.log.error("SpiffyTitles: KeyError parsing Twitch.TV JSON response: %s" % (str(e)))
 
@@ -1221,6 +1224,17 @@ class SpiffyTitles(callbacks.Plugin):
                         if duration:
                             duration = self.get_duration_from_seconds(duration)
 
+                        if 'status' not in data:
+                            if 'title' in data:
+                                data['status'] = data['title']
+
+                        if 'views' not in data:
+                            if 'view_count' in data:
+                                data['views'] = data['view_count']
+
+                        if 'followers' in data:
+                            data['followers'] =  '{:,}'.format(data.get('followers', 0))
+
                         template_vars = {
                             "curator": data['curator'].get('display_name', ''),
                             "game": data.get('game', ''),
@@ -1239,15 +1253,33 @@ class SpiffyTitles(callbacks.Plugin):
                             recorded_date = dateutil.parser.parse(recordedat)
                             recordedat = recorded_date.strftime('%Y-%m-%d %H:%M:%S %Z')
 
-                        # Channel info, like display_name, may be in the sub-object 'channel'
-                        if 'display_name' not in data and data['channel']['display_name'] is not None:
-                            data['display_name'] = data['channel']['display_name']
+                        if 'display_name' not in data:
+                            if 'channel' in data and data['channel']['display_name'] is not None:
+                                data['display_name'] = data['channel']['display_name']
+                            else:
+                                data['display_name'] = link_info['channel_name']
+
+                        if 'status' not in data:
+                            if 'title' in data:
+                                data['status'] = data['title']
+                            elif 'description' in data:
+                                data['status'] = data['description']
+
+                        if 'views' not in data:
+                            if 'viewer_count' in data:
+                                data['views'] = data['viewer_count']
+                            elif 'view_count' in data:
+                                data['views'] = data['view_count']
+
+                        if 'followers' in data:
+                            data['followers'] =  '{:,}'.format(data.get('followers', 0))
+
                         template_vars = {
                             "user": data.get('display_name', ''),
                             "game": data.get('game', ''),
                             "status": data.get('status', ''),
                             "views": '{:,}'.format(data.get('views', 0)),
-                            "followers": '{:,}'.format(data.get('followers', 0)),
+                            "followers": data.get('followers'),
                             "duration": duration,
                             "recordedat": recordedat
                         }
@@ -1255,9 +1287,9 @@ class SpiffyTitles(callbacks.Plugin):
 
                     self.log.debug("SpiffyTitles: twitch - reply = '%s'" % (reply))
                     return reply
-                else:
-                    self.log.debug("SpiffyTitles: twitch - falling back to default handler")
-                    return self.handler_default(url, channel)
+#                else:
+#                    self.log.debug("SpiffyTitles: twitch - falling back to default handler")
+#                    return self.handler_default(url, channel)
 
             else:
                 self.log.error("SpiffyTitles: Error parsing Twitch JSON response")
@@ -1265,7 +1297,7 @@ class SpiffyTitles(callbacks.Plugin):
             self.log.error("SpiffyTitles: twitch HTTP %s: %s" % (request.status_code, request.text))
             return '[ Twitch.TV ] - Video Not Found'
         
-        return "Twitch handler reply"
+        return ""
 
     def is_valid_imgur_id(self, input):
         """
