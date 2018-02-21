@@ -1,7 +1,3 @@
-Admin:
-	User:		Athan
-	Password:	h6GMbvSQeyYfpFaB
-
 TODO:
 	Twitch - Finish converting it all to the latest API version
 		NB: Requires some hoop-jumping to do things like
