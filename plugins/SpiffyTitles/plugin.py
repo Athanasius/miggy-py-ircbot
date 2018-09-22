@@ -1321,7 +1321,7 @@ class SpiffyTitles(callbacks.Plugin):
         if is_album:
             result = self.handler_imgur_album(url, info, channel)
         else:
-            result = self.handler_default(url, channel)
+            result = self.handler_imgur_image(url, info, channel)
         return result
 
     def handler_imgur_album(self, url, info, channel):
