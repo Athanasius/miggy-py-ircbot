@@ -35,3 +35,7 @@ logs/
 # Intellij PyCharm / IDEA related files
 *.iml
 .idea
+
+*.pid
+admin-password.txt
+Cmdr-quakenet*
