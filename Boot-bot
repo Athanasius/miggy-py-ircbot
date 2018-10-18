@@ -1,0 +1,18 @@
+#!/bin/sh
+
+cd /home/edbot/miggy-py-ircbot || exit 1
+
+PIDFILE=Cmdr-quakenet.pid
+ARGS="--daemon Cmdr-quakenet.conf" 
+
+if [ ! -f "${PIDFILE}" ];
+then
+	nice supybot ${ARGS}
+else
+	ps -p `cat "${PIDFILE}"` > /dev/null 2>&1
+	if [ "$?" -eq "1" ];
+	then
+		nice supybot ${ARGS}
+	fi
+fi
+		
