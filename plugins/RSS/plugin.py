@@ -327,6 +327,10 @@ class RSS(callbacks.Plugin):
                     feed.modified = d.modified
                 feed.data = d.feed
                 feed.entries = d.entries
+                if feed.name == "edgalnet":
+                    self.log.debug("RSS: updated_feed '%s' - producing galnet links from IDs" % (feed.name))
+                    for e in feed.entries:
+                        e['link'] = re.sub('/en/', '/en/galnet/uid/', e.get('id'))
                 feed.last_update = time.time()
             (initial, feed.initial) = (feed.initial, False)
         self.announce_feed(feed, initial)
